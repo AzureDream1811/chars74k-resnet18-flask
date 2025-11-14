@@ -1,40 +1,55 @@
 # Handwritten English Character Classification (Chars74K + ResNet-18)
 
-## Mô tả
+## 📌 Mô tả
 
-- Phân loại ký tự tiếng Anh: **0–9, a–z, A–Z**.
-- Dataset: **Chars74K - Digital English Font**  
-  Link: https://www.kaggle.com/datasets/supreethrao/chars74kdigitalenglishfont
-- Mô hình: **CNN (ResNet-18)**.
+Bài toán phân loại ký tự tiếng Anh dạng viết in/viết thường gồm:  
+**0–9, A–Z, a–z** (tổng tối đa 62 lớp).
 
-## Chức năng / Demo
+- **Dataset:** Chars74K – Digital English Font  
+  https://www.kaggle.com/datasets/supreethrao/chars74kdigitalenglishfont
+- **Model:** CNN – ResNet-18 (tùy chỉnh cho ảnh grayscale 64×64)
 
-- Web demo (Flask):
-  - Upload ảnh ký tự (PNG/JPG) → mô hình dự đoán ký tự tương ứng.
-  - Hiển thị xác suất Top-k (ví dụ Top-3).
-  - Khi đánh giá mô hình: hiển thị **confusion matrix**.
+---
 
-## Đơn vị đo hiệu suất
+## 🎯 Chức năng / Demo (Flask)
 
-- Accuracy (%)
-- F1-score (%)
-- Top-3 Accuracy (%)
-- Confusion matrix
+- Upload ảnh (PNG/JPG) chứa 1 ký tự → mô hình dự đoán ký tự tương ứng.
+- Hiển thị **Top-3 xác suất cao nhất**.
+- Khi đánh giá mô hình sẽ hiển thị thêm **confusion matrix (heatmap)**.
 
-## Cấu trúc thư mục (dự kiến)
+---
 
-- `app/` – Flask web demo (route upload ảnh, predict)
-- `src/` – code train/evaluate model (dataset, model, train script)
-- `src/dataset_chars74k.py` – Chứa class Dataset để đọc ảnh từ thư mục data/raw/English/Fnt - Chuyển ảnh PNG → tensor PyTorch, resize, normalize
-- `src/model_resnet18.py.py`– Chứa hàm build model ResNet-18 (kiến trúc CNN) - Điều chỉnh cho ảnh input grayscale (1 kênh, 64×64).
-- `src/train.py`
-  Script chạy train từ A–Z:
-  load dataset
-  chia train/val
-  tạo model, optimizer
-  vòng lặp epoch
-  tính Accuracy, F1, Top-3, Log loss
-  lưu model_best.pth, confusion_matrix.npy, classes.txt.
-- `data/raw/` – dữ liệu gốc tải từ Kaggle
-- `data/processed/` – dữ liệu đã tiền xử lý (resize, normalize, split train/test)
-- `notebooks/` – notebook (nếu cần) để EDA, vẽ biểu đồ
+## 📈 Đơn vị đo hiệu suất
+
+- **Accuracy (%)**
+- **F1-score (macro)**
+- **Top-3 accuracy (%)**
+- **Confusion matrix**
+
+---
+
+## 📚 Cấu trúc thư mục dự án
+
+```text
+chars74k-resnet18-flask/
+│
+├── app/                     # Flask web demo
+│   └── app.py               # Routes upload/predict
+│
+├── src/                     # Code huấn luyện mô hình
+│   ├── dataset_chars74k.py  # Đọc ảnh từ data/raw/English/Fnt
+│   ├── model_resnet18.py    # Xây dựng model ResNet-18 (ảnh grayscale)
+│   └── train.py             # Train model + tính metrics + lưu model
+│
+├── data/
+│   ├── raw/                 # Dataset tải từ Kaggle (KHÔNG commit lên Git)
+│   └── processed/           # Dữ liệu sau tiền xử lý (nếu cần)
+│
+├── model_best.pth           # Model tốt nhất (auto tạo sau khi train)
+├── confusion_matrix.npy     # Lưu confusion matrix để vẽ heatmap
+├── classes.txt              # Map index → tên class (Sample001 → A, ...)
+│
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
