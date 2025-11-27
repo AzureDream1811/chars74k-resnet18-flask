@@ -19,7 +19,7 @@ Bài toán phân loại ký tự tiếng Anh dạng viết in/viết thường g
 
 ---
 
-## 📈 Đơn vị đo hiệu suất
+## 📈 Đơn vị đo hiệu suất (cần fix)
 
 - **Accuracy (%)**
 - **F1-score (macro)**
@@ -28,28 +28,22 @@ Bài toán phân loại ký tự tiếng Anh dạng viết in/viết thường g
 
 ---
 
-## 📚 Cấu trúc thư mục dự án
+## Các quy trình
 
-```text
-chars74k-resnet18-flask/
-│
-├── app/                     # Flask web demo
-│   └── app.py               # Routes upload/predict
-│
-├── src/                     # Code huấn luyện mô hình
-│   ├── dataset_chars74k.py  # Đọc ảnh từ data/raw/English/Fnt
-│   ├── model_resnet18.py    # Xây dựng model ResNet-18 (ảnh grayscale)
-│   └── train.py             # Train model + tính metrics + lưu model
-│
-├── data/
-│   ├── raw/                 # Dataset tải từ Kaggle (KHÔNG commit lên Git)
-│   └── processed/           # Dữ liệu sau tiền xử lý (nếu cần)
-│
-├── model_best.pth           # Model tốt nhất (auto tạo sau khi train)
-├── confusion_matrix.npy     # Lưu confusion matrix để vẽ heatmap
-├── classes.txt              # Map index → tên class (Sample001 → A, ...)
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
+- **Dataset (Đọc dữ liệu)**
+  - Thực hiện trong dataset_chars74k.py
+  - Chỉ cần: load ảnh, trả về PIL image + label
+- **Processing/Transform (xử lý ảnh đầu vào)**
+  - Thực hiện trong image_transform.py
+  - Tạo module xử lý ảnh đầu vào: resize, tensor, normalize
+  - Tách ra file để dùng chung train + flask
+- **Model (resNet18)**
+  - Tạo file/class model
+  - Chỉ cần forward run được
+- **Training (lặp epoch + update)**
+  - Viết function train()
+  - lưu model .pth
+- **Inference (load model + predict)**
+  - Tạo inference module riêng
+- **Flask**
+  - Dùng function từ inference
