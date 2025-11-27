@@ -1,27 +1,28 @@
 import os
-from torch.utils.data import Dataset
 from PIL import Image
+from torch.utils.data import Dataset
 
 class Chars74KDataset(Dataset):
-    def __init__(self, root, transform=None):
-        self.root = root
+    def __init__(self, root_dir, transform=None):
+        self.root_dir = root_dir
         self.transform = transform
-        self.samples = self._load_samples()
+        self.samples = []
 
-    def _load_samples(self):
-        samples = []
-        for label in range(62):
-            folder = f"Sample{label+1:03d}"
-            class_dir = os.path.join(self.root, folder)
+        for folder in sorted(os.listdir(root_dir)):
+            if not folder.startswith("Sample"):
+                continue
+
+            class_dir = os.path.join(root_dir, folder)
             if not os.path.isdir(class_dir):
                 continue
 
-            for file in os.listdir(class_dir):
-                if file.endswith(".png"):
-                    img_path = os.path.join(class_dir, file)
-                    samples.append((img_path, label))
+            sample_num = int(folder.replace("Sample", ""))
+            label_idx = sample_num - 1
 
-        return samples
+            for fname in os.listdir(class_dir):
+                if fname.lower().endswith((".png", ".jpg", ".jpeg", ".bmp")):
+                    img_path = os.path.join(class_dir, fname)
+                    self.samples.append((img_path, label_idx))
 
     def __len__(self):
         return len(self.samples)
