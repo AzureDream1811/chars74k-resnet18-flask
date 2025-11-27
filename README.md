@@ -6,7 +6,7 @@ Bài toán phân loại ký tự tiếng Anh dạng viết in/viết thường g
 **0–9, A–Z, a–z** (tổng tối đa 62 lớp).
 
 - **Dataset:** Chars74K – Digital English Font  
-  https://www.kaggle.com/datasets/supreethrao/chars74kdigitalenglishfont
+  <https://www.kaggle.com/datasets/supreethrao/chars74kdigitalenglishfont>
 - **Model:** CNN – ResNet-18 (tùy chỉnh cho ảnh grayscale 64×64)
 
 ---
