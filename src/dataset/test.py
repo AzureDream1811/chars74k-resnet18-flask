@@ -6,7 +6,7 @@ def main():
 
     img, label = dataset[0]
     print(type(img))
-    print(label)
+    print("curent label:", label)
     img.show()
 
 if __name__ == "__main__":
