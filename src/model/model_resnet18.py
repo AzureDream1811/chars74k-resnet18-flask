@@ -16,8 +16,7 @@ class BuildResnet18(nn.Module):
 
     def __init__(self, num_classes=62, pretrained=True, requires_grad=True):
         super(BuildResnet18, self).__init__()
-        
-        
+
         self.model = models.resnet18(
             weights=models.ResNet18_Weights.DEFAULT if pretrained else None
         )
