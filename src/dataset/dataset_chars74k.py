@@ -2,11 +2,8 @@ import os
 from PIL import Image
 from torch.utils.data import Dataset
 
-<<<<<<< HEAD
-=======
 CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
->>>>>>> origin/main
 class Chars74KDataset(Dataset):
     def __init__(self, root_dir, transform=None):
         self.root_dir = root_dir
@@ -39,8 +36,4 @@ class Chars74KDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
-<<<<<<< HEAD
         return img, label
-=======
-        return img, label
->>>>>>> origin/main
