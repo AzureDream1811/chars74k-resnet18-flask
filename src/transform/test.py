@@ -7,7 +7,7 @@ import numpy as np
 from src.dataset.dataset_chars74k import Chars74KDataset
 
 # Import Transform (Yêu cầu 2)
-from image_transform import get_test_transform, IMAGENET_MEAN, IMAGENET_STD
+from .image_transform import get_test_transform, IMAGENET_MEAN, IMAGENET_STD
 
 
 # Hàm đảo ngược chuẩn hóa để hiển thị ảnh
@@ -32,7 +32,7 @@ def main():
 
     # 2. Khởi tạo Dataset, truyền Transform vào
     # LƯU Ý: Thay đổi đường dẫn đến dữ liệu của bạn
-    root_dir = "D:/EMNIST/chars74k-resnet18-flask/data/raw/EnglishFnt/English/Fnt"
+    root_dir = "data/raw/EnglishFnt/English/Fnt"
 
     try:
         # Sự liên kết: Dataset.__init__ nhận transform_func
