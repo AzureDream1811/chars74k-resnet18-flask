@@ -11,6 +11,16 @@ Bài toán phân loại ký tự tiếng Anh dạng viết in/viết thường g
 
 ---
 
+## Cài đặt
+
+  python3 -m venv .venv
+  .venv\scripts\activate.ps1
+  pip install -r requirements.txt
+  
+## Cài đặt pytorch có hỗ trợ gpu
+
+  pip3 install torch torchvision --index-url <https://download.pytorch.org/whl/cu126>
+
 ## 🎯 Chức năng / Demo (Flask)
 
 - Upload ảnh (PNG/JPG) chứa 1 ký tự → mô hình dự đoán ký tự tương ứng.
