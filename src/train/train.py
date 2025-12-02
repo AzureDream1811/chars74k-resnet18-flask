@@ -8,6 +8,20 @@ from src.model.model_resnet18 import BuildResnet18
 
 
 def main():
+    """
+    Hàm main để huấn luyện mô hình ResNet18 với dataset Chars74K.
+    
+    Tham số:
+    - device: thiết bị để huấn luyện (cpu/gpu)
+    - batch_size: kích thước của batch
+    - num_epochs: số epoch
+    - learning_rate: tốc độ học
+    - root_dir: đường dẫn đến thư mục dataset
+    - val_ratio: tỷ lệ chia tập train và val
+    
+    Trả về:
+    - model đã được huấn luyện và lưu vào chars74k_resnet18.pth
+    """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     batch_size = 64
     num_epochs = 3
