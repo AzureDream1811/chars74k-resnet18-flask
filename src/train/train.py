@@ -151,7 +151,7 @@ if __name__ == "__main__":
     # Có thể chỉnh tham số ở đây
     train(
         data_root="data/raw/EnglishFnt/English/Fnt",
-        num_epochs=1,
+        num_epochs=3,
         batch_size=64,
         lr=1e-3,
         train_ratio=0.8,
