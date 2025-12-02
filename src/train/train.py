@@ -81,9 +81,6 @@ def main():
               f"Train Loss: {avg_train_loss:.4f}  "
               f"Val Acc: {val_acc:.4f}")
 
-    # =======================
-    # 7. Lưu model
-    # =======================
     torch.save(model.state_dict(), "chars74k_resnet18.pth")
     print("Đã lưu model vào chars74k_resnet18.pth")
 
