@@ -4,7 +4,7 @@ from torchvision import models
 
 class BuildResnet18(nn.Module):
     """
-    1. resnet gốc có output 1000 -> thay bằng output 62
+    1. resnet18 gốc có output 1000 -> thay bằng output 62
     2. weight: kiến thức có sẵn -> nhanh hơn, chính xác hơn
     3. self.model.parameters(): danh sách weight + bias để model học
     4. requires_rad: bật/tắt việc học trọng số

@@ -1,4 +1,4 @@
-from .dataset_chars74k import Chars74KDataset
+from src.dataset.dataset_chars74k import Chars74KDataset
 import matplotlib.pyplot as plt
 
 def main():
@@ -18,8 +18,4 @@ def main():
     plt.show()
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     main()
-=======
-    main()
->>>>>>> origin/main

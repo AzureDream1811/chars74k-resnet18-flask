@@ -1,28 +1,27 @@
 import torch
 import matplotlib.pyplot as plt
-import numpy as np
 
 # Import Dataset (Yêu cầu 1)
 # Giả định cấu trúc module cho phép import từ 'dataset'
 from src.dataset.dataset_chars74k import Chars74KDataset
 
 # Import Transform (Yêu cầu 2)
-from .image_transform import get_test_transform, IMAGENET_MEAN, IMAGENET_STD
+from src.transform.image_transform import get_test_transform, IMAGENET_MEAN, IMAGENET_STD
 
 
 # Hàm đảo ngược chuẩn hóa để hiển thị ảnh
 def denormalize(tensor, mean, std):
     """
     Đảo ngược phép chuẩn hóa: (tensor * std) + mean.
+    Tạo tensor mean và std có shape (C, 1, 1) để broadcast
+    Thực hiện (tensor * std) + mean
+    Kẹp giá trị về [0, 1]
     """
-    # Tạo tensor mean và std có shape (C, 1, 1) để broadcast
     mean = torch.tensor(mean, dtype=tensor.dtype).view(3, 1, 1)
     std = torch.tensor(std, dtype=tensor.dtype).view(3, 1, 1)
 
-    # Thực hiện (tensor * std) + mean
     tensor = tensor * std + mean
 
-    # Kẹp giá trị về [0, 1]
     return torch.clamp(tensor, 0, 1)
 
 
@@ -37,17 +36,17 @@ def main():
     try:
         # Sự liên kết: Dataset.__init__ nhận transform_func
         dataset = Chars74KDataset(root_dir=root_dir, transform=transform_func)
-
         print(f"Tổng số ảnh trong Dataset: {len(dataset)}")
 
         # 3. Lấy ảnh đầu tiên
         # Đầu ra (img) sẽ là một PyTorch Tensor (không phải PIL Image nữa)
         tensor_img, label = dataset[0]
-
-        print(f"--- Kết quả sau Transform ---")
+        assert isinstance(tensor_img, torch.Tensor)
+        
+        print("--- Kết quả sau Transform ---")
         print(f"Label: {label}")
         print(f"Kích thước Tensor: {tensor_img.shape} (C, H, W)")
-        print(f"Kiểu dữ liệu: {tensor_img.dtype}")
+        print(f"Kiểu dữ liệu: {type(tensor_img)}")
         print(f"Giá trị Min/Max: {tensor_img.min():.4f} / {tensor_img.max():.4f}")
 
         # 4. Hiển thị ảnh kiểm tra

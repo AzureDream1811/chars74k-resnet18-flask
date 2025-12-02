@@ -1,102 +1,200 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader,random_split
+from torch.utils.data import DataLoader, Subset
 
 from src.dataset.dataset_chars74k import Chars74KDataset
 from src.transform.image_transform import get_train_transform, get_test_transform
 from src.model.model_resnet18 import BuildResnet18
 
 
-def main():
+def get_device():
     """
-    Hàm main để huấn luyện mô hình ResNet18 với dataset Chars74K.
-    
-    Tham số:
-    - device: thiết bị để huấn luyện (cpu/gpu)
-    - batch_size: kích thước của batch
-    - num_epochs: số epoch
-    - learning_rate: tốc độ học
-    - root_dir: đường dẫn đến thư mục dataset
-    - val_ratio: tỷ lệ chia tập train và val
-    
-    Trả về:
-    - model đã được huấn luyện và lưu vào chars74k_resnet18.pth
+    Return the device to use (either cpu or cuda).
+    Print the device used.
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    batch_size = 64
-    num_epochs = 3
-    learning_rate = 1e-3
-    root_dir = "data/raw/EnglishFnt/English/Fnt"
+    device = torch.device("cuda" if torch.cuda.is_available else "cpu")
+    print(f"Device: {device}")
+    return device
 
-    train_tf = get_train_transform(image_size=64)
-    test_tf = get_test_transform(image_size=64)
 
-    full_dataset = Chars74KDataset(root_dir=root_dir, transform=train_tf)
-    print(f"Tổng số ảnh trong Dataset: {len(full_dataset)}")
+def create_dataloaders(root_dir, batch_size=64, test_ratio=0.2, img_size=64):
+    """
+    Create train and test dataloaders from Chars74KDataset.
 
-    val_ratio = 0.1
-    val_size = int(len(full_dataset) * val_ratio)
-    train_size = len(full_dataset) - val_size
-    
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
-    print(f"Train size: {train_size}, Val size {val_size}")
+    Parameters:
+        root_dir (str): path to dataset root directory
+        batch_size (int): batch size for dataloader (default: 64)
+        test_ratio (float): proportion of dataset to use for testing (default: 0.2)
+        img_size (int): image size for transform (default: 64)
 
-    val_dataset.dataset.transform = test_tf
-    
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
-    
-    model = BuildResnet18(num_classes=62, pretrained=True, requires_grad=True)
-    model = model.to(device=device)
+    Returns:
+        tuple of train and test dataloaders
+    """
+    base_dataset = Chars74KDataset(root_dir=root_dir, transform=None)
+    num_samples = len(base_dataset)
+    print(f"Total image in dataset: {num_samples}")
+
+    indices = torch.randperm(num_samples).tolist()
+
+    test_size = int(num_samples * test_ratio)
+    train_size = num_samples - test_size
+
+    train_indices = indices[:train_size]
+    test_indices = indices[train_size:]
+
+    print(f"train_size: {train_size}, test_size= {test_size}")
+
+    train_transform = get_train_transform(image_size=img_size)
+    test_trainsform = get_test_transform(image_size=img_size)
+
+    train_base = Chars74KDataset(root_dir=root_dir, transform=train_transform)
+    test_base = Chars74KDataset(root_dir=root_dir, transform=test_trainsform)
+
+    train_dataset = Subset(train_base, train_indices)
+    test_dataset = Subset(test_base, test_indices)
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=2,
+        pin_memory=True,
+    )
+
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=2,
+        pin_memory=True,
+    )
+
+    return train_loader, test_loader
+
+
+def build_model(
+    num_classes=62, lr=1e-3, pretrained=True, requires_grad=True, device=None
+):
+    """
+    Build a model, criterion, and optimizer for training.
+
+    Parameters:
+        num_classes (int): number of classes in classification dataset (default: 62)
+        lr (float): learning rate for optimizer (default: 1e-3)
+        pretrained (bool): whether to use pretrained weights (default: True)
+        requires_grad (bool): whether to require gradient for model parameters (default: True)
+        device (torch.device): device to use (default: None)
+
+    Returns:
+        tuple of model, criterion, and optimizer
+    """
+    if device is None:
+        device = get_device()
+
+    model = BuildResnet18(
+        num_classes=num_classes, pretrained=pretrained, requires_grad=requires_grad
+    ).to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
-    
-    for epoch in range(num_epochs):
-        model.train()
-        running_loss = 0.0
-        
-        for images, labels in train_loader:
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    return model, criterion, optimizer
+
+
+def train_one_epoch(model, train_loader, criterion, optimizer, device):
+    """
+    Train one epoch of a model on a given dataset.
+
+    Parameters:
+        model (nn.Module): model to train
+        train_loader (DataLoader): data loader for training set
+        criterion (nn.Module): loss function to use
+        optimizer (torch.optim.Optimizer): optimizer to use
+        device (torch.device): device to use for training
+
+    Returns:
+        float: average loss of the epoch
+    """
+    model.train()
+    running_loss = 0.0
+
+    for images, labels in train_loader:
+        images = images.to(device)
+        labels = labels.to(device)
+
+        optimizer.zero_grad()
+
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item()
+
+    avg_loss = running_loss / len(train_loader)
+    return avg_loss
+
+
+def evaluate(model, val_loader, device):
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for images, labels in val_loader:
             images = images.to(device)
             labels = labels.to(device)
-            
-            optimizer.zero_grad()
 
             outputs = model(images)
+            _, predict = torch.max(outputs, dim=1)
 
-            loss = criterion(outputs, labels)
+            total += labels.size(0)
+            correct += (predict == labels).sum().item()
 
-            loss.backward()
+    acc = correct / total if total > 0 else 0.0
+    return acc
 
-            optimizer.step()
 
-            running_loss += loss.item()
-            
-        avg_train_loss = running_loss/ len(train_loader)
+def main(
+    root_dir="data/raw/EnglishFnt/English/Fnt",
+    num_classes=62,
+    batch_size=64,
+    num_epochs=3,
+    lr=1e-3,
+    image_size=64,
+    pretrained=True,
+    requires_grad=True,
+    save_path="chars74k_resnet18.pth",
+):
+    device = get_device()
 
-        model.eval()
-        correct = 0
-        total = 0
+    train_loader, test_loader = create_dataloaders(
+        root_dir=root_dir,
+        batch_size=batch_size,
+        img_size=image_size
+    )
+
+    model, criterion, optimizer = build_model(
+        num_classes,
+        lr,
+        pretrained,
+        requires_grad,
+        device,
+    )
+
+    for epoch in range(num_epochs):
+        train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
+        test_acc = evaluate(model, test_loader, device)
         
-        with torch.no_grad():  # tắt gradient khi test
-            for images, labels in val_loader:
-                images = images.to(device)
-                labels = labels.to(device)
-
-                outputs = model(images)          # [batch, 62]
-                _, predicted = torch.max(outputs, dim=1)  # lấy index lớn nhất
-
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-
-        val_acc = correct / total if total > 0 else 0.0
-
-        print(f"Epoch [{epoch+1}/{num_epochs}]  "
-              f"Train Loss: {avg_train_loss:.4f}  "
-              f"Val Acc: {val_acc:.4f}")
-
-    torch.save(model.state_dict(), "chars74k_resnet18.pth")
-    print("Đã lưu model vào chars74k_resnet18.pth")
+        print(
+            f"Epoch [{epoch+1}/{num_epochs}]  "
+            f"Train Loss: {train_loss:.4f}  "
+            f"Val Acc: {test_acc:.4f}"
+        )
+        
+    torch.save(model.state_dict(), save_path)
+    print(f"Đã lưu model vào {save_path}")
 
 
 if __name__ == "__main__":

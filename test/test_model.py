@@ -1,5 +1,5 @@
 import torch
-from .model_resnet18 import BuildResnet18
+from src.model.model_resnet18 import BuildResnet18
 
 
 def main():
