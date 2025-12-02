@@ -137,6 +137,17 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
 
 
 def evaluate(model, val_loader, device):
+    """
+    Evaluate the accuracy of a model on a given validation set.
+
+    Parameters:
+        model (nn.Module): model to evaluate
+        val_loader (DataLoader): data loader for validation set
+        device (torch.device): device to use for evaluation
+
+    Returns:
+        float: accuracy of the model on the validation set
+    """
     model.eval()
     correct = 0
     total = 0
@@ -167,6 +178,20 @@ def main(
     requires_grad=True,
     save_path="chars74k_resnet18.pth",
 ):
+    """
+    Main function to train a ResNet18 model on the Chars74K dataset.
+
+    Parameters:
+        root_dir (str): path to dataset root directory (default: "data/raw/EnglishFnt/English/Fnt")
+        num_classes (int): number of classes in the dataset (default: 62)
+        batch_size (int): batch size for dataloader (default: 64)
+        num_epochs (int): number of epochs to train (default: 3)
+        lr (float): learning rate for optimizer (default: 1e-3)
+        image_size (int): image size for transform (default: 64)
+        pretrained (bool): whether to use pretrained weights (default: True)
+        requires_grad (bool): whether to require gradient for model parameters (default: True)
+        save_path (str): path to save the model (default: "chars74k_resnet18.pth")
+    """
     device = get_device()
 
     train_loader, test_loader = create_dataloaders(
