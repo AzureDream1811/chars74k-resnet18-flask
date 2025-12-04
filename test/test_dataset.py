@@ -1,6 +1,7 @@
 from src.dataset.dataset_chars74k import Chars74KDataset
 import matplotlib.pyplot as plt
 
+
 def main():
     dataset = Chars74KDataset(root_dir="data/raw/EnglishFnt/English/Fnt")
 
@@ -16,6 +17,7 @@ def main():
     plt.title(f"Label = {label}")
     plt.axis("off")
     plt.show()
+
 
 if __name__ == "__main__":
     main()
