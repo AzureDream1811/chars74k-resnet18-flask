@@ -76,14 +76,14 @@ pip3 install torch torchvision --index-url <https://download.pytorch.org/whl/cu1
 
 ## Mô hình truyền thống (baseline) để so sánh
 
-- **hog_svm**
+- **logreg_flatten**
   - baseline/logreg_flatten.py
   - Ảnh -> grayscale -> resize 32x32 -> flatten 1024 chiều
   - Train Logistic Regression đa lớp
   - datasetL 18,600 ảnh (300/class)
   - Train/Test: 80%/20%
   - Accuracy thu được ~85%
-- **logreg_flatten**
+- **hog_svm**
 
 - **Ý nghĩa Baseline**
   - Cho thấy mô hình truyền thống không học được đặc trưng ảnh
