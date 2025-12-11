@@ -40,25 +40,51 @@ pip3 install torch torchvision --index-url <https://download.pytorch.org/whl/cu1
 
 ## Các quy trình
 
-- **Dataset (Đọc dữ liệu)**
+- **Dataset**
   - Thực hiện trong dataset_chars74k.py
-  - Chỉ cần: load ảnh, trả về PIL image + label
-- **Processing/Transform (xử lý ảnh đầu vào)**
+  - Load ảnh - trả về:
+    - PIL Image
+    - label (0-61)
+  - không xử lý ảnh, transform sẽ làm
+- **Transform**
   - Thực hiện trong image_transform.py
-  - Tạo module xử lý ảnh đầu vào: resize, tensor, normalize
-  - Tách ra file để dùng chung train + flask
+  - Resize về 64x64
+  - ToTensor(CHW)
+  - Normalize theo ImageNet
 - **Model (resNet18)**
-  - Tạo file/class model
-  - Chỉ cần forward run được
-- **Training (lặp epoch + update)**
-  - Viết function train()
-  - lưu model .pth
+  - Load Resnet18 (pretrained)
+  - Thay đổi fc layer từ 1000 - 62 lớp
+  - Forward trả về logits [batch, 62]
+- **Training**
+  - train.py
+  - Load dataset
+  - Lặp qua epoch
+    - forward -> loss
+    - backward -> cập nhật weight
+      Lưu model:
+      -> chars74k_resnet18.pth
 - **Inference (load model + predict)**
-  - Tạo inference module riêng
+  - Load .pth
+  - Áp dụng transform inference
+  - Trả về:
+    - Top-1 prediction
+    - Top-K probabilities
 - **Flask**
-  - Dùng function từ inference
+  - Upload ảnh
+  - Gọi inference module
+  - Render kết quả dự đoán
 
 ## Mô hình truyền thống (baseline) để so sánh
 
 - **hog_svm**
+  - baseline/logreg_flatten.py
+  - Ảnh -> grayscale -> resize 32x32 -> flatten 1024 chiều
+  - Train Logistic Regression đa lớp
+  - datasetL 18,600 ảnh (300/class)
+  - Train/Test: 80%/20%
+  - Accuracy thu được ~85%
 - **logreg_flatten**
+
+- **Ý nghĩa Baseline**
+  - Cho thấy mô hình truyền thống không học được đặc trưng ảnh
+  - ResNet18 học được cạnh, đường cong, stroke → độ chính xác cao hơn
