@@ -95,10 +95,15 @@ def main():
     print("Train size: ", train_features.shape[0])
     print("Test size: ", test_features.shape[0])
 
+    # Create a Logistic Regression classifier
+    # We use the lbfgs solver, which is a type of optimization algorithm
+    # that is efficient for large datasets
+    # We also set the maximum number of iterations to 1000
+    # and the number of jobs to -1, which means that all available CPU cores will be used
     clf = LogisticRegression(
-        solver="lbfgs",
-        max_iter=1000,
-        n_jobs=-1,
+        solver="lbfgs",  # optimization algorithm
+        max_iter=1000,  # maximum number of iterations
+        n_jobs=-1,  # use all available CPU cores
     )
 
     print("Training Logistic Regression...")
