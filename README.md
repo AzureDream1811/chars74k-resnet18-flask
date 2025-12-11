@@ -13,13 +13,13 @@ Bài toán phân loại ký tự tiếng Anh dạng viết in/viết thường g
 
 ## Cài đặt
 
-  python3 -m venv .venv
-  .venv\scripts\activate.ps1
-  pip install -r requirements.txt
-  
+python3 -m venv .venv
+.venv\scripts\activate.ps1
+pip install -r requirements.txt
+
 ## Cài đặt pytorch có hỗ trợ gpu
 
-  pip3 install torch torchvision --index-url <https://download.pytorch.org/whl/cu126>
+pip3 install torch torchvision --index-url <https://download.pytorch.org/whl/cu126>
 
 ## 🎯 Chức năng / Demo (Flask)
 
@@ -57,3 +57,8 @@ Bài toán phân loại ký tự tiếng Anh dạng viết in/viết thường g
   - Tạo inference module riêng
 - **Flask**
   - Dùng function từ inference
+
+## Mô hình truyền thống (baseline) để so sánh
+
+- **hog_svm**
+- **logreg_flatten**
