@@ -1,7 +1,7 @@
+from io import BytesIO
 from flask import Flask, request, jsonify
 from pathlib import Path
 from PIL import Image
-from numpy import argmax
 import torch
 
 from src.model.model_resnet18 import BuildResnet18
@@ -22,7 +22,7 @@ model.eval()
 
 
 # Transforms and charset
-transforms = get_inference_transform(image_size=64)
+transform = get_inference_transform(image_size=64)
 CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 
@@ -37,33 +37,25 @@ def index():
 @app.post("/predict")
 def predict():
     """
-    Predict a character from an image.
+    Predicts the character from an image.
 
-    The API endpoint accepts a multipart/form-data request with an image file.
+    Returns a JSON object with the predicted character and its index in the CHARSET.
 
-    Returns a JSON response with the predicted character and its index in the character set.
-
-    Example response:
-    {
-        "prediction": "A",
-        "index": 0
-    }
-
-    If no image is provided, returns a 400 error response with a JSON error message.
-    Example response:
-    {
-        "error": "No image uploaded"
-    }
+    :statuscode 200: Prediction successful
+    :statuscode 400: No image uploaded
     """
     if "image" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
 
     image_file = request.files["image"]
-    image = Image.open(image_file)
+    image_data = image_file.read()
+    image = Image.open(BytesIO(image_data)).convert("RGB")
 
-    tensor = transforms(image)
-    tensor = tensor.unsqueeze(0)
-    tensor = tensor.to(DEVICE)
+    # Apply transform and ensure we have a torch.Tensor
+    tensor = transform(image)
+    assert isinstance(tensor, torch.Tensor)
+
+    tensor = tensor.unsqueeze(0).to(DEVICE)
 
     output = model(tensor)
     index = int(output.argmax(dim=1).item())
