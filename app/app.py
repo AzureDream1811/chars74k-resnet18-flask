@@ -51,7 +51,6 @@ def predict():
     image_data = image_file.read()
     image = Image.open(BytesIO(image_data)).convert("RGB")
 
-    # Apply transform and ensure we have a torch.Tensor
     tensor = transform(image)
     assert isinstance(tensor, torch.Tensor)
 
