@@ -1,5 +1,4 @@
 from torchvision import transforms
-import torch
 
 # Hằng số chuẩn hóa (Mean và Std của ImageNet)
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
