@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css')}}">
+    <title>Char74k Inference</title>
+</head>
+<body>
+    <h2>Upload image</h2>
+
+    <form id="predictForm" enctype="multipart/form-data">
+        <input type="file" name="image" id="imageInput" required>
+        <button type="submit">predict</button>
+    </form>
+
+    <img id="imagePreview" src="" alt="Image Preview">
+
+    <p id="result"></p>
+
+    <script src="{{ url_for('static', filename='js/predict.js')}}"></script>
+</body>
+</html>
