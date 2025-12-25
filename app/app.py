@@ -29,9 +29,17 @@ CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 app = Flask(__name__)
 
 
-@app.get("/")
+@app.route("/")
 def index():
+    return render_template("index.html")
+
+@app.route("/upload")
+def upload():
     return render_template("upload.html")
+
+@app.route("/draw")
+def draw():
+    return render_template("draw.html")
 
 
 @app.post("/predict")
