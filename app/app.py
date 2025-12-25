@@ -1,5 +1,5 @@
 from io import BytesIO
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 from pathlib import Path
 from PIL import Image
 import torch
@@ -29,9 +29,17 @@ CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 app = Flask(__name__)
 
 
-@app.get("/")
+@app.route("/")
 def index():
-    return "chars74k ResNet18 inference"
+    return render_template("index.html")
+
+@app.route("/upload")
+def upload():
+    return render_template("upload.html")
+
+@app.route("/draw")
+def draw():
+    return render_template("draw.html")
 
 
 @app.post("/predict")
@@ -56,11 +64,12 @@ def predict():
 
     tensor = tensor.unsqueeze(0).to(DEVICE)
 
-    output = model(tensor)
-    index = int(output.argmax(dim=1).item())
-    char = CHARSET[index]
+    with torch.no_grad():
+        output = model(tensor)
+        index = int(output.argmax(dim=1).item())
+        char = CHARSET[index]
 
-    return jsonify({"prediction": char, "index": index}), 200
+    return jsonify({"prediction": char})
 
 
 if __name__ == "__main__":
