@@ -45,10 +45,10 @@ def create_dataloaders(root_dir, batch_size=64, test_ratio=0.2, img_size=64):
     print(f"train_size: {train_size}, test_size= {test_size}")
 
     train_transform = get_train_transform(image_size=img_size)
-    test_trainsform = get_test_transform(image_size=img_size)
+    test_transform = get_test_transform(image_size=img_size)
 
     train_base = Chars74KDataset(root_dir=root_dir, transform=train_transform)
-    test_base = Chars74KDataset(root_dir=root_dir, transform=test_trainsform)
+    test_base = Chars74KDataset(root_dir=root_dir, transform=test_transform)
 
     train_dataset = Subset(train_base, train_indices)
     test_dataset = Subset(test_base, test_indices)
