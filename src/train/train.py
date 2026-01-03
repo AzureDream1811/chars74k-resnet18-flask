@@ -12,23 +12,25 @@ def get_device():
     Return the device to use (either cpu or cuda).
     Print the device used.
     """
-    device = torch.device("cuda" if torch.cuda.is_available else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
     return device
 
 
-def create_dataloaders(root_dir, batch_size=64, test_ratio=0.2, img_size=64):
+def create_dataloaders(root_dir, batch_size=64, train_ratio=0.7, val_ratio=0.2, test_ratio=0.1, img_size=64):
     """
-    Create train and test dataloaders from Chars74KDataset.
+    Create train, validation and test dataloaders from Chars74KDataset.
 
     Parameters:
         root_dir (str): path to dataset root directory
         batch_size (int): batch size for dataloader (default: 64)
-        test_ratio (float): proportion of dataset to use for testing (default: 0.2)
+        train_ratio (float): proportion for training (default: 0.7)
+        val_ratio (float): proportion for validation (default: 0.2)
+        test_ratio (float): proportion for testing (default: 0.1)
         img_size (int): image size for transform (default: 64)
 
     Returns:
-        tuple of train and test dataloaders
+        tuple of train, validation and test dataloaders
     """
     base_dataset = Chars74KDataset(root_dir=root_dir, transform=None)
     num_samples = len(base_dataset)
@@ -36,27 +38,39 @@ def create_dataloaders(root_dir, batch_size=64, test_ratio=0.2, img_size=64):
 
     indices = torch.randperm(num_samples).tolist()
 
-    test_size = int(num_samples * test_ratio)
-    train_size = num_samples - test_size
+    train_size = int(num_samples * train_ratio)
+    val_size = int(num_samples * val_ratio)
+    test_size = num_samples - train_size - val_size
 
     train_indices = indices[:train_size]
-    test_indices = indices[train_size:]
+    val_indices = indices[train_size:train_size + val_size]
+    test_indices = indices[train_size + val_size:]
 
-    print(f"train_size: {train_size}, test_size= {test_size}")
+    print(f"train_size: {train_size}, val_size: {val_size}, test_size: {test_size}")
 
     train_transform = get_train_transform(image_size=img_size)
     test_transform = get_test_transform(image_size=img_size)
 
     train_base = Chars74KDataset(root_dir=root_dir, transform=train_transform)
+    val_base = Chars74KDataset(root_dir=root_dir, transform=test_transform)
     test_base = Chars74KDataset(root_dir=root_dir, transform=test_transform)
 
     train_dataset = Subset(train_base, train_indices)
+    val_dataset = Subset(val_base, val_indices)
     test_dataset = Subset(test_base, test_indices)
 
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
+        num_workers=2,
+        pin_memory=True,
+    )
+
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
         num_workers=2,
         pin_memory=True,
     )
@@ -69,11 +83,11 @@ def create_dataloaders(root_dir, batch_size=64, test_ratio=0.2, img_size=64):
         pin_memory=True,
     )
 
-    return train_loader, test_loader
+    return train_loader, val_loader, test_loader
 
 
 def build_model(
-    num_classes=62, lr=1e-3, pretrained=True, requires_grad=True, device=None
+        num_classes=62, lr=1e-3, pretrained=True, requires_grad=True, device=None
 ):
     """
     Build a model, criterion, and optimizer for training.
@@ -168,15 +182,15 @@ def evaluate(model, val_loader, device):
 
 
 def main(
-    root_dir="data/raw/EnglishFnt/English/Fnt",
-    num_classes=62,
-    batch_size=64,
-    num_epochs=3,
-    lr=1e-3,
-    image_size=64,
-    pretrained=True,
-    requires_grad=True,
-    save_path="chars74k_resnet18.pth",
+        root_dir="data/raw/EnglishFnt/English/Fnt",
+        num_classes=62,
+        batch_size=64,
+        num_epochs=20,
+        lr=1e-3,
+        image_size=64,
+        pretrained=True,
+        requires_grad=True,
+        save_path="chars74k_resnet18.pth",
 ):
     """
     Main function to train a ResNet18 model on the Chars74K dataset.
@@ -194,7 +208,7 @@ def main(
     """
     device = get_device()
 
-    train_loader, test_loader = create_dataloaders(
+    train_loader, val_loader, test_loader = create_dataloaders(
         root_dir=root_dir,
         batch_size=batch_size,
         img_size=image_size
@@ -210,14 +224,18 @@ def main(
 
     for epoch in range(num_epochs):
         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        test_acc = evaluate(model, test_loader, device)
-        
+        val_acc = evaluate(model, val_loader, device)  # Dùng val_loader thay vì test_loader
+
         print(
-            f"Epoch [{epoch+1}/{num_epochs}]  "
+            f"Epoch [{epoch + 1}/{num_epochs}]  "
             f"Train Loss: {train_loss:.4f}  "
-            f"Val Acc: {test_acc:.4f}"
+            f"Val Acc: {val_acc:.4f}"
         )
-        
+
+    # Sau khi training xong, evaluate trên test set:
+    test_acc = evaluate(model, test_loader, device)
+    print(f"Final Test Accuracy: {test_acc:.4f}")
+
     torch.save(model.state_dict(), save_path)
     print(f"Đã lưu model vào {save_path}")
 
