@@ -3,14 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Default page</title>
+    <title>Character Recognition - Chars74K ResNet18</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <p>Redirect to  
-        <a href="{{ url_for('upload') }}">upload image</a>
-    </p>
-    <p>Redirect to  
-        <a href="{{ url_for('draw') }}">draw image</a>
-    </p>
+    <div class="container">
+        <div class="header">
+            <h1>🔤 Character Recognition</h1>
+            <p>ResNet18 model trained on Chars74K dataset</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Accuracy: 91.33% • 62 Classes (0-9, A-Z, a-z)</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('upload')">📤 Upload Image</button>
+            <button class="tab" onclick="switchTab('draw')">✏️ Draw Character</button>
+            <button class="tab" onclick="switchTab('info')">ℹ️ Model Info</button>
+        </div>
+
+        <div class="content">
+            <!-- Upload Tab -->
+            <div id="upload-tab" class="tab-content active">
+                <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+                    <div class="upload-icon">📁</div>
+                    <h3>Click to upload or drag & drop</h3>
+                    <p>PNG, JPG files are accepted</p>
+                    <input type="file" id="file-input" accept="image/*">
+                </div>
+
+                <div class="preview-section" id="preview-section">
+                    <h3>Preview:</h3>
+                    <img id="preview-image" class="preview-image" alt="Preview">
+                    <div>
+                        <button class="btn btn-primary" onclick="predictUpload()">🔍 Predict Character</button>
+                        <button class="btn btn-secondary" onclick="resetUpload()">🔄 Upload New Image</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Draw Tab -->
+            <div id="draw-tab" class="tab-content">
+                <div class="canvas-container">
+                    <canvas id="draw-canvas" width="500" height="500"></canvas>
+                    <div class="canvas-controls">
+                        <button class="btn btn-secondary" onclick="clearCanvas()">🗑️ Clear</button>
+                        <button class="btn btn-primary" onclick="predictDraw()">🔍 Predict Character</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Tab -->
+            <div id="info-tab" class="tab-content">
+                <div class="info-section">
+                    <h3>📊 Model Information</h3>
+                    <ul>
+                        <li><strong>Architecture:</strong> ResNet-18 (Pretrained on ImageNet)</li>
+                        <li><strong>Dataset:</strong> Chars74K - Digital English Font</li>
+                        <li><strong>Total Images:</strong> 62,992</li>
+                        <li><strong>Train/Val/Test Split:</strong> 70% / 20% / 10%</li>
+                        <li><strong>Image Size:</strong> 64×64 pixels</li>
+                        <li><strong>Number of Classes:</strong> 62 (0-9, A-Z, a-z)</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h3>🎯 Performance Metrics</h3>
+                    <ul>
+                        <li><strong>Test Accuracy:</strong> 91.33%</li>
+                        <li><strong>Best Validation Accuracy:</strong> 91.77% (Epoch 18)</li>
+                        <li><strong>Training Epochs:</strong> 20</li>
+                        <li><strong>Final Training Loss:</strong> 0.1106</li>
+                        <li><strong>Optimizer:</strong> Adam (lr=1e-3)</li>
+                        <li><strong>Batch Size:</strong> 64</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h3>💡 Usage Tips</h3>
+                    <ul>
+                        <li>Use clear, high-contrast images for best results</li>
+                        <li>Center the character in the image</li>
+                        <li>Avoid background noise or multiple characters</li>
+                        <li>For drawing: Use thick, clear strokes</li>
+                        <li>Black text on white background works best</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px;">Processing your image...</p>
+            </div>
+
+            <!-- Results -->
+            <div class="results" id="results">
+                <div class="result-card">
+                    <h2 style="color: #667eea; margin-bottom: 10px;">Top Prediction</h2>
+                    <div class="prediction-char" id="top-prediction">?</div>
+                </div>
+
+                <h3 style="text-align: center; margin-bottom: 15px; color: #667eea;">Top 3 Predictions</h3>
+                <div class="top3-results" id="top3-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
