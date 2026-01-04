@@ -23,6 +23,7 @@ def load_charset74k_flatten(root_dir=ROOT_DIR, max_per_class=300, img_size=32):
     """
     features = []
     labels = []
+    count = 0
 
     for folder in sorted(os.listdir(root_dir)):
         if not folder.startswith("Sample"):
@@ -35,7 +36,6 @@ def load_charset74k_flatten(root_dir=ROOT_DIR, max_per_class=300, img_size=32):
         sample_num = int(folder.replace("Sample", ""))
         label = sample_num - 1
 
-        count = 0
         print(f"Loading class {sample_num}...")
 
         for fname in os.listdir(class_dir):
@@ -72,7 +72,8 @@ def load_charset74k_flatten(root_dir=ROOT_DIR, max_per_class=300, img_size=32):
     features = np.array(features, dtype=np.float32)
     labels = np.array(labels, dtype=np.int32)
 
-    print(f"Loaded {count} samples for class {sample_num}.")
+    num_classes = len(np.unique(labels)) if labels.size > 0 else 0
+    print(f"Loaded {count} samples across {num_classes} classes.")
     print("features shape:", features.shape)
     print("labels shape:", labels.shape)
 
