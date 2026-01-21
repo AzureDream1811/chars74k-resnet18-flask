@@ -79,7 +79,7 @@ def predict():
             probabilities = torch.nn.functional.softmax(output, dim=1)[0]
             
             # Get Top-3 predictions
-            top3_prob, top3_indices = torch.topk(probabilities, 3)
+            top3_prob, top3_indices = probabilities.topk(3)
             
             results = []
             for prob, idx in zip(top3_prob, top3_indices):
