@@ -38,8 +38,11 @@ def create_dataloaders(root_dir, batch_size=64, train_ratio=0.7, val_ratio=0.2, 
 
     indices = torch.randperm(num_samples).tolist()
 
+    # Tính kích thước train
     train_size = int(num_samples * train_ratio)
+    # Tính kích thước val
     val_size = int(num_samples * val_ratio)
+    # Tính kích trước test
     test_size = num_samples - train_size - val_size
 
     train_indices = indices[:train_size]

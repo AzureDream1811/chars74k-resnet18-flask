@@ -32,19 +32,6 @@ def index():
     """Render modern homepage with tabs"""
     return render_template("index.html")
 
-
-@app.route("/upload")
-def upload():
-    """Render legacy upload page (optional)"""
-    return render_template("upload.html")
-
-
-@app.route("/draw")
-def draw():
-    """Render legacy draw page (optional)"""
-    return render_template("draw.html")
-
-
 @app.post("/predict")
 def predict():
     """
