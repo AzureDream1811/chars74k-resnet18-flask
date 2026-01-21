@@ -49,20 +49,82 @@ Bài toán phân loại ký tự tiếng Anh dạng viết in/viết thường g
 
 ---
 
-## 🎯 Chức năng / Demo (Flask)
+## 🚀 Flow & Giải thích nhanh (Training, Evaluation) 
 
-- Upload ảnh (PNG/JPG) chứa 1 ký tự → mô hình dự đoán ký tự tương ứng.
-- Hiển thị **Top-3 xác suất cao nhất**.
-- Khi đánh giá mô hình sẽ hiển thị thêm **confusion matrix (heatmap)**.
+Dưới đây là mô tả ngắn gọn từng bước để thầy hoặc người mới có thể hiểu quy trình mô hình hoạt động — bao gồm cả flow khi huấn luyện (train) và khi đánh giá (evaluate), kèm tóm tắt các đơn vị đo hiệu suất (Accuracy / Precision / Recall / F1) theo Why / When / How / What.
+
+### A. Flow khi huấn luyện (training)
+1. Chuẩn bị dữ liệu
+   - Nguồn: `data/raw/EnglishFnt/English/Fnt` (thư mục `SampleXXX` tương ứng từng lớp).
+   - File liên quan: `src/dataset/dataset_chars74k.py`.
+2. Tiền xử lý (transform)
+   - Resize → ToTensor → Normalize theo ImageNet mean/std (64×64).
+   - File liên quan: `src/transform/image_transform.py`.
+3. Chia tập và tạo DataLoader
+   - Chia 70%/20%/10% (train/val/test) như trong `src/train/train.py`.
+4. Xây dựng mô hình
+   - ResNet‑18 từ `torchvision`, thay `fc` → 62 output (class). File: `src/model/model_resnet18.py`.
+5. Huấn luyện
+   - Loss: `CrossEntropyLoss`; Optimizer: `Adam` (lr=1e-3).
+   - Vòng lặp: forward → loss → backward → optimizer.step.
+6. Lưu checkpoint
+   - Lưu weights: `chars74k_resnet18.pth`.
+
+_Lệnh chạy training (PowerShell):_
+```powershell
+cd "D:\Coding\Projects\learning_1st_semester_2025\AI programming\chars74k-resnet18-flask"
+.venv\scripts\activate.ps1
+python -m src.train.train
+```
+
+### B. Flow khi đánh giá (evaluation)
+1. Load model checkpoint và set `model.eval()`
+   - File: `src/train/evaluate_metrics.py` (script đã có) hoặc load trong `app/app.py` để inference từng ảnh.
+2. Tạo test DataLoader bằng transform test (giữ cùng split nếu muốn tái lập).
+3. Forward qua toàn bộ test set (không grad): thu `y_true` và `y_pred`.
+4. Tính metric với `sklearn.metrics` (accuracy, precision, recall, f1). Có thể in `classification_report` và vẽ `confusion_matrix` để visualization.
+
+_Lệnh chạy đánh giá (PowerShell):_
+```powershell
+cd "D:\Coding\Projects\learning_1st_semester_2025\AI programming\chars74k-resnet18-flask"
+.venv\scripts\activate.ps1
+python -m src.train.evaluate_metrics
+```
 
 ---
 
-## 📈 Đơn vị đo hiệu suất
+## 📏 Đơn vị đo hiệu suất — Why / When / How / What
 
-- ✅ **Accuracy (%)** - 91.33% trên test set
-- 🔄 **F1-score (macro)** - (cần tính toán thêm)
-- 🔄 **Top-3 accuracy (%)** - (cần tính toán thêm)
-- 🔄 **Confusion matrix** - (cần tạo visualization)
+1) Accuracy
+- Why: đo tỉ lệ dự đoán đúng trên tổng mẫu.
+- When: dùng để biết tổng quan khi các lớp tương đối cân bằng.
+- How: accuracy = số dự đoán đúng / tổng mẫu.
+- What: hàm dùng: `sklearn.metrics.accuracy_score(y_true, y_pred)`; report dưới dạng phần trăm.
+
+2) Precision
+- Why: đo độ chính xác của các dự đoán cho mỗi lớp (khi model nói "là X" thì có bao nhiêu là đúng).
+- When: quan trọng khi false positives tốn kém.
+- How: precision = TP / (TP + FP).
+- What: hàm: `sklearn.metrics.precision_score(y_true, y_pred, average='macro')` (hoặc `weighted`).
+
+3) Recall
+- Why: đo khả năng tìm đủ các mẫu thực sự thuộc 1 lớp (không bỏ sót).
+- When: quan trọng khi false negatives tốn kém.
+- How: recall = TP / (TP + FN).
+- What: hàm: `sklearn.metrics.recall_score(y_true, y_pred, average='macro')` (hoặc `weighted`).
+
+4) F1‑score
+- Why: là sự cân bằng giữa precision và recall — hữu ích khi cần trade‑off.
+- When: dùng khi dataset không cân bằng hoặc cần 1 chỉ số tóm tắt hơn accuracy.
+- How: F1 = 2 * (precision * recall) / (precision + recall).
+- What: hàm: `sklearn.metrics.f1_score(y_true, y_pred, average='macro')` (hoặc `weighted`).
+
+---
+
+## 🔎 Ghi chú quan trọng
+- Luôn nêu rõ kiểu average (`macro` / `weighted`) khi báo Precision/Recall/F1.
+- Nếu muốn tái lập kết quả chính xác, set random seed trước khi chia dataset hoặc lưu indices split.
+- Nên kèm `confusion_matrix` (heatmap) để minh hoạ các cặp class hay nhầm lẫn (ví dụ O ↔ 0, l ↔ 1).
 
 ---
 
