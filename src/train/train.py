@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, Subset
 from src.dataset.dataset_chars74k import Chars74KDataset
 from src.transform.image_transform import get_train_transform, get_test_transform
 from src.model.model_resnet18 import BuildResnet18
+from src.train.evaluate_metrics import evaluate_metrics, print_metrics
 
 
 def get_device():
@@ -241,6 +242,13 @@ def main(
 
     torch.save(model.state_dict(), save_path)
     print(f"Đã lưu model vào {save_path}")
+
+    # Run full evaluation on test set and print detailed metrics
+    try:
+        metrics, labels, preds = evaluate_metrics(model, test_loader, device)
+        print_metrics(metrics)
+    except Exception as e:
+        print(f"Evaluation failed: {e}")
 
 
 if __name__ == "__main__":

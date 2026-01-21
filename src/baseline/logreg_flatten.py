@@ -5,8 +5,10 @@ import PIL.Image as Image
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import precision_score, recall_score, f1_score
 
 ROOT_DIR = "data/raw/EnglishFnt/English/Fnt"
+CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 
 def load_charset74k_flatten(root_dir=ROOT_DIR, max_per_class=300, img_size=32):
@@ -38,6 +40,7 @@ def load_charset74k_flatten(root_dir=ROOT_DIR, max_per_class=300, img_size=32):
 
         print(f"Loading class {sample_num}...")
 
+        class_count = 0
         for fname in os.listdir(class_dir):
             if not fname.lower().endswith((".png", ".jpg", ".jpeg", ".bmp")):
                 continue
@@ -63,10 +66,12 @@ def load_charset74k_flatten(root_dir=ROOT_DIR, max_per_class=300, img_size=32):
             features.append(feat)
             labels.append(label)
 
-            # Increment count
+            # Increment counters
             count += 1
+            class_count += 1
 
-            if max_per_class is not None and count >= max_per_class:
+            # limit per class (fix previous global-only limit)
+            if max_per_class is not None and class_count >= max_per_class:
                 break
 
     features = np.array(features, dtype=np.float32)
@@ -113,9 +118,34 @@ def main():
     y_pred = clf.predict(test_features)
 
     acc = accuracy_score(test_labels, y_pred)
+
+    # Detailed metrics
+    precision_macro = precision_score(test_labels, y_pred, average="macro", zero_division=0)
+    recall_macro = recall_score(test_labels, y_pred, average="macro", zero_division=0)
+    f1_macro = f1_score(test_labels, y_pred, average="macro", zero_division=0)
+
+    precision_weighted = precision_score(test_labels, y_pred, average="weighted", zero_division=0)
+    recall_weighted = recall_score(test_labels, y_pred, average="weighted", zero_division=0)
+    f1_weighted = f1_score(test_labels, y_pred, average="weighted", zero_division=0)
+
     print(f"Test Accuracy: {acc * 100:.2f}%")
-    print("Classification Report:")
-    print(classification_report(test_labels, y_pred))
+    print("\nMetrics summary:")
+    print(f"  Precision (macro):   {precision_macro:.4f}")
+    print(f"  Recall (macro):      {recall_macro:.4f}")
+    print(f"  F1 (macro):          {f1_macro:.4f}")
+    print(f"  Precision (weighted):{precision_weighted:.4f}")
+    print(f"  Recall (weighted):   {recall_weighted:.4f}")
+    print(f"  F1 (weighted):       {f1_weighted:.4f}")
+
+    # Per-class report (use CHARSET for readable class names when available)
+    num_classes = len(np.unique(test_labels))
+    if num_classes <= len(CHARSET):
+        target_names = [CHARSET[i] for i in range(num_classes)]
+        print("\nClassification Report:")
+        print(classification_report(test_labels, y_pred, target_names=target_names, zero_division=0))
+    else:
+        print("\nClassification Report:")
+        print(classification_report(test_labels, y_pred, zero_division=0))
 
 
 if __name__ == "__main__":
