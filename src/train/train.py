@@ -175,10 +175,8 @@ def evaluate(model, val_loader, device):
 
             outputs = model(images)
 
-            # 2. lấy class có điểm cao nhất
             predicted_labels = outputs.argmax(dim=1)
 
-            # 3. cập nhật số lượng
             total_samples += labels.size(0)
             correct_predictions += (predicted_labels == labels).sum().item()
 
