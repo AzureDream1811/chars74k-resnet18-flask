@@ -137,6 +137,7 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
 
         optimizer.zero_grad()
 
+        # model(images) === model.foward(images)
         outputs = model(images)
         loss = criterion(outputs, labels)
 
@@ -152,7 +153,7 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
 
 def evaluate(model, val_loader, device):
     """
-    Evaluate the accuracy of a model on a given validation set.
+    Evaluate the model on a given validation set.
 
     Parameters:
         model (nn.Module): model to evaluate
@@ -162,23 +163,27 @@ def evaluate(model, val_loader, device):
     Returns:
         float: accuracy of the model on the validation set
     """
-    model.eval()
-    correct = 0
-    total = 0
+    model.eval()                 
+    total_samples = 0            
+    correct_predictions = 0      
 
     with torch.no_grad():
         for images, labels in val_loader:
+
             images = images.to(device)
             labels = labels.to(device)
 
             outputs = model(images)
-            _, predict = torch.max(outputs, dim=1)
 
-            total += labels.size(0)
-            correct += (predict == labels).sum().item()
+            # 2. lấy class có điểm cao nhất
+            predicted_labels = outputs.argmax(dim=1)
 
-    acc = correct / total if total > 0 else 0.0
-    return acc
+            # 3. cập nhật số lượng
+            total_samples += labels.size(0)
+            correct_predictions += (predicted_labels == labels).sum().item()
+
+    accuracy = correct_predictions / total_samples if total_samples > 0 else 0
+    return accuracy
 
 
 def main(
@@ -219,17 +224,23 @@ def main(
         requires_grad,
     )
 
+    best_val_acc = 0.0
+
     for epoch in range(num_epochs):
         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        val_acc = evaluate(
-            model, val_loader, device
-        )  # Dùng val_loader thay vì test_loader
+        val_acc = evaluate(model, val_loader, device)
 
         print(
-            f"Epoch [{epoch + 1}/{num_epochs}]  "
-            f"Train Loss: {train_loss:.4f}  "
+            f"Epoch [{epoch+1}/{num_epochs}] "
+            f"Loss: {train_loss:.4f} "
             f"Val Acc: {val_acc:.4f}"
         )
+
+        # 👉 Lưu model tốt nhất
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(model.state_dict(), save_path)
+            print("✔ Saved best model")
 
     # Run full evaluation on test set and print detailed metrics
     try:
@@ -237,10 +248,6 @@ def main(
         print_metrics(metrics)
     except Exception as e:
         print(f"Evaluation failed: {e}")
-
-    torch.save(model.state_dict(), save_path)
-    print(f"Đã lưu model vào {save_path}")
-
 
 if __name__ == "__main__":
     main()

@@ -20,8 +20,7 @@ class ResnetInference:
 
     def predict(self, img_path):
         pil_img = Image.open(img_path).convert("RGB")
-        img_tensor = torchvision.transforms.ToTensor()(pil_img)
-        img = img_tensor.unsqueeze(0).to(self.device)
+        img = self.transform(pil_img).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
             output = self.model(img)
