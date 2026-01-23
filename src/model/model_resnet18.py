@@ -3,18 +3,15 @@ from torchvision import models
 
 
 class BuildResnet18(nn.Module):
-    """
-    1. resnet18 gốc có output 1000 -> thay bằng output 62
-    2. weight: kiến thức có sẵn -> nhanh hơn, chính xác hơn
-    3. self.model.parameters(): danh sách weight + bias để model học
-    4. requires_rad: bật/tắt việc học trọng số
-    5. for param in ...: lặp param để cho weight + bias để bật/tắt học
-    6. self.model.fc: lớp cuối cùng của resnet (fully connected layer)
-    7. self.model.fc.in_features: số input của lớp fc (thường 512)
-    8. nn.Linear(in_feature, num_classes): thay fc mới (512 -> 62)
-    """
-
     def __init__(self, num_classes=62, pretrained=True, requires_grad=True):
+        """
+        Initialize a ResNet18 model with specified number of classes, pretrained weights and require gradient flag.
+
+        Parameters:
+            num_classes (int): number of classes in the output layer (default: 62)
+            pretrained (bool): whether to use pretrained weights (default: True)
+            requires_grad (bool): whether to require gradient for model parameters (default: True)
+        """
         super(BuildResnet18, self).__init__()
 
         self.model = models.resnet18(
@@ -28,6 +25,6 @@ class BuildResnet18(nn.Module):
 
         self.model.fc = nn.Linear(in_feature, num_classes)
 
-    def forward(self, x):
-        x = self.model(x)
-        return x
+    def forward(self, images):
+        images = self.model(images)
+        return images

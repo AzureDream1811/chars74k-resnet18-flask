@@ -8,30 +8,32 @@ from src.model.model_resnet18 import BuildResnet18
 from src.train.evaluate_metrics import evaluate_metrics, print_metrics
 
 
-def get_device():
+def get_device() -> torch.device:
     """
     Return the device to use (either cpu or cuda).
     Print the device used.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}")
     return device
 
 
-def create_dataloaders(root_dir, batch_size=64, train_ratio=0.7, val_ratio=0.2, test_ratio=0.1, img_size=64):
+def create_dataloaders(
+    root_dir, batch_size=64, train_ratio=0.7, val_ratio=0.2, img_size=64
+):
     """
-    Create train, validation and test dataloaders from Chars74KDataset.
+    Create train, validation, and test dataloaders for the Chars74K dataset.
 
     Parameters:
         root_dir (str): path to dataset root directory
-        batch_size (int): batch size for dataloader (default: 64)
-        train_ratio (float): proportion for training (default: 0.7)
-        val_ratio (float): proportion for validation (default: 0.2)
-        test_ratio (float): proportion for testing (default: 0.1)
-        img_size (int): image size for transform (default: 64)
+        batch_size (int): batch size for dataloaders
+        train_ratio (float): proportion for training
+        val_ratio (float): proportion for validation
+        img_size (int): image size for transform
 
     Returns:
-        tuple of train, validation and test dataloaders
+        train_loader (DataLoader): DataLoader for training set
+        val_loader (DataLoader): DataLoader for validation set
+        test_loader (DataLoader): DataLoader for test set
     """
     base_dataset = Chars74KDataset(root_dir=root_dir, transform=None)
     num_samples = len(base_dataset)
@@ -39,82 +41,75 @@ def create_dataloaders(root_dir, batch_size=64, train_ratio=0.7, val_ratio=0.2, 
 
     indices = torch.randperm(num_samples).tolist()
 
-    # Tính kích thước train
     train_size = int(num_samples * train_ratio)
-    # Tính kích thước val
     val_size = int(num_samples * val_ratio)
-    # Tính kích trước test
     test_size = num_samples - train_size - val_size
 
     train_indices = indices[:train_size]
-    val_indices = indices[train_size:train_size + val_size]
-    test_indices = indices[train_size + val_size:]
+    val_indices = indices[train_size : train_size + val_size]
+    test_indices = indices[train_size + val_size :]
 
     print(f"train_size: {train_size}, val_size: {val_size}, test_size: {test_size}")
 
-    train_transform = get_train_transform(image_size=img_size)
-    test_transform = get_test_transform(image_size=img_size)
+    train_dataset_full = Chars74KDataset(
+        root_dir=root_dir, transform=get_train_transform(image_size=img_size)
+    )
 
-    train_base = Chars74KDataset(root_dir=root_dir, transform=train_transform)
-    val_base = Chars74KDataset(root_dir=root_dir, transform=test_transform)
-    test_base = Chars74KDataset(root_dir=root_dir, transform=test_transform)
+    eval_dataset_full = Chars74KDataset(
+        root_dir=root_dir, transform=get_test_transform(image_size=img_size)
+    )
 
-    train_dataset = Subset(train_base, train_indices)
-    val_dataset = Subset(val_base, val_indices)
-    test_dataset = Subset(test_base, test_indices)
+    # lấy phần tử chỉ có index nằm trong danh sách train_indices
+    train_dataset = Subset(train_dataset_full, train_indices)
+    val_dataset = Subset(eval_dataset_full, val_indices)
+    test_dataset = Subset(eval_dataset_full, test_indices)
 
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=2,
-        pin_memory=True,
     )
 
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
-        shuffle=False,
-        num_workers=2,
-        pin_memory=True,
     )
 
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
-        shuffle=False,
-        num_workers=2,
-        pin_memory=True,
     )
 
     return train_loader, val_loader, test_loader
 
 
 def build_model(
-        num_classes=62, lr=1e-3, pretrained=True, requires_grad=True, device=None
+    num_classes=62, lr=1e-3, pretrained=True, requires_grad=True
 ):
+
     """
-    Build a model, criterion, and optimizer for training.
+    Build a ResNet18 model with specified number of classes, learning rate, 
+    whether to use pretrained weights, and whether to require gradient.
 
     Parameters:
-        num_classes (int): number of classes in classification dataset (default: 62)
+        num_classes (int): number of classes in the output layer (default: 62)
         lr (float): learning rate for optimizer (default: 1e-3)
         pretrained (bool): whether to use pretrained weights (default: True)
         requires_grad (bool): whether to require gradient for model parameters (default: True)
-        device (torch.device): device to use (default: None)
 
     Returns:
-        tuple of model, criterion, and optimizer
+        model (nn.Module): built ResNet18 model
+        criterion (nn.Module): loss function to use
+        optimizer (torch.optim.Optimizer): optimizer to use
     """
-    if device is None:
-        device = get_device()
-
     model = BuildResnet18(
         num_classes=num_classes, pretrained=pretrained, requires_grad=requires_grad
-    ).to(device)
+    ).to(get_device())
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(
+        filter(lambda p: p.requires_grad, model.parameters()), lr=lr
+    )
 
     return model, criterion, optimizer
 
@@ -145,6 +140,7 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device):
         outputs = model(images)
         loss = criterion(outputs, labels)
 
+        # phần fine-tune: để biết weight sai bao nhiêu sau đó cập nhật trọng số đó
         loss.backward()
         optimizer.step()
 
@@ -186,15 +182,15 @@ def evaluate(model, val_loader, device):
 
 
 def main(
-        root_dir="data/raw/EnglishFnt/English/Fnt",
-        num_classes=62,
-        batch_size=64,
-        num_epochs=20,
-        lr=1e-3,
-        image_size=64,
-        pretrained=True,
-        requires_grad=True,
-        save_path="chars74k_resnet18.pth",
+    root_dir="data/raw/EnglishFnt/English/Fnt",
+    num_classes=62,
+    batch_size=64,
+    num_epochs=20,
+    lr=1e-3,
+    image_size=64,
+    pretrained=True,
+    requires_grad=True,
+    save_path="chars74k_resnet18.pth",
 ):
     """
     Main function to train a ResNet18 model on the Chars74K dataset.
@@ -213,9 +209,7 @@ def main(
     device = get_device()
 
     train_loader, val_loader, test_loader = create_dataloaders(
-        root_dir=root_dir,
-        batch_size=batch_size,
-        img_size=image_size
+        root_dir=root_dir, batch_size=batch_size, img_size=image_size
     )
 
     model, criterion, optimizer = build_model(
@@ -223,12 +217,13 @@ def main(
         lr,
         pretrained,
         requires_grad,
-        device,
     )
 
     for epoch in range(num_epochs):
         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        val_acc = evaluate(model, val_loader, device)  # Dùng val_loader thay vì test_loader
+        val_acc = evaluate(
+            model, val_loader, device
+        )  # Dùng val_loader thay vì test_loader
 
         print(
             f"Epoch [{epoch + 1}/{num_epochs}]  "
@@ -236,19 +231,15 @@ def main(
             f"Val Acc: {val_acc:.4f}"
         )
 
-    # Sau khi training xong, evaluate trên test set:
-    test_acc = evaluate(model, test_loader, device)
-    print(f"Final Test Accuracy: {test_acc:.4f}")
-
-    torch.save(model.state_dict(), save_path)
-    print(f"Đã lưu model vào {save_path}")
-
     # Run full evaluation on test set and print detailed metrics
     try:
         metrics, labels, preds = evaluate_metrics(model, test_loader, device)
         print_metrics(metrics)
     except Exception as e:
         print(f"Evaluation failed: {e}")
+
+    torch.save(model.state_dict(), save_path)
+    print(f"Đã lưu model vào {save_path}")
 
 
 if __name__ == "__main__":
