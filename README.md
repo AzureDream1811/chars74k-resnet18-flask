@@ -102,13 +102,13 @@ python -m src.train.evaluate_metrics
 - What: hàm dùng: `sklearn.metrics.accuracy_score(y_true, y_pred)`; report dưới dạng phần trăm.
 
 2) Precision
-- Why: đo độ chính xác của các dự đoán cho mỗi lớp (khi model nói "là X" thì có bao nhiêu là đúng).
+- Why: Khi model khẳng định một kết quả, thì bao nhiêu lần là đúng?
 - When: quan trọng khi false positives tốn kém.
 - How: precision = TP / (TP + FP).
 - What: hàm: `sklearn.metrics.precision_score(y_true, y_pred, average='macro')` (hoặc `weighted`).
 
 3) Recall
-- Why: đo khả năng tìm đủ các mẫu thực sự thuộc 1 lớp (không bỏ sót).
+- Why: Khi kết quả đúng xuất hiện, model có nhận ra không?
 - When: quan trọng khi false negatives tốn kém.
 - How: recall = TP / (TP + FN).
 - What: hàm: `sklearn.metrics.recall_score(y_true, y_pred, average='macro')` (hoặc `weighted`).
@@ -119,6 +119,13 @@ python -m src.train.evaluate_metrics
 - How: F1 = 2 * (precision * recall) / (precision + recall).
 - What: hàm: `sklearn.metrics.f1_score(y_true, y_pred, average='macro')` (hoặc `weighted`).
 
+TP (True Positive): mẫu thực sự thuộc lớp và model dự đoán đúng. (TP = số dự đoán đúng cho lớp đó)
+
+FP (False Positive): mẫu không thuộc lớp nhưng model dự đoán là lớp đó (false alarm).
+
+FN (False Negative): mẫu thực sự thuộc lớp nhưng model dự đoán khác (bị bỏ sót).
+
+(TN): mẫu không thuộc lớp và model dự đoán không phải lớp đó.
 ---
 
 ## 🔎 Ghi chú quan trọng
@@ -197,10 +204,10 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu12
 
 ### So sánh ResNet18 vs Baseline
 
-| Model | Accuracy | Tham số | Thời gian train |
+| Model | Accuracy | Thời gian train |
 |-------|----------|---------|----------------|
-| Logistic Regression | ~85% | ~63K | Nhanh |
-| **ResNet18** | **91.33%** | ~11M | ~20 epochs |
+| Logistic Regression | ~85% | Nhanh |
+| **ResNet18** | **91.33%** | ~20 epochs |
 
 **Ý nghĩa Baseline:**
 - Mô hình truyền thống không học được đặc trưng phức tạp từ ảnh

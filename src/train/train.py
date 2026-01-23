@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
+from pathlib import Path
 
 from src.dataset.dataset_chars74k import Chars74KDataset
 from src.transform.image_transform import get_train_transform, get_test_transform
@@ -185,7 +186,7 @@ def evaluate(model, val_loader, device):
 
 
 def main(
-    root_dir="data/raw/EnglishFnt/English/Fnt",
+    root_dir=None,
     num_classes=62,
     batch_size=64,
     num_epochs=20,
@@ -211,8 +212,20 @@ def main(
     """
     device = get_device()
 
+    # Resolve dataset path relative to repository root when not provided
+    if root_dir is None:
+        repo_root = Path(__file__).resolve().parents[2]
+        root_dir = repo_root / "data" / "raw" / "EnglishFnt" / "English" / "Fnt"
+
+    root_path = Path(root_dir)
+    if not root_path.exists():
+        raise FileNotFoundError(
+            f"Dataset path not found: {root_path}\n" \
+            "Make sure the dataset is downloaded and the path is correct, or pass `root_dir` to `main()` with the correct location."
+        )
+
     train_loader, val_loader, test_loader = create_dataloaders(
-        root_dir=root_dir, batch_size=batch_size, img_size=image_size
+        root_dir=str(root_path), batch_size=batch_size, img_size=image_size
     )
 
     model, criterion, optimizer = build_model(
